@@ -621,7 +621,7 @@ impl Felt252Serde for GenericArg {
 impl Felt252Serde for BranchTarget {
     fn serialize(&self, output: &mut Vec<BigUintAsHex>) -> Result<(), Felt252SerdeError> {
         match self {
-            Self::Fallthrough => usize::MAX.serialize(output),
+            Self::Fallthrough => u64::MAX.serialize(output),
             Self::Statement(idx) => idx.serialize(output),
         }
     }
@@ -629,8 +629,14 @@ impl Felt252Serde for BranchTarget {
     fn deserialize<'a, I: ExactSizeIterator<Item = &'a BigUint>>(
         input: &mut I,
     ) -> Result<Self, Felt252SerdeError> {
-        let idx = usize::deserialize(input)?;
-        Ok(if idx == usize::MAX { Self::Fallthrough } else { Self::Statement(StatementIdx(idx)) })
+        let idx = u64::deserialize(input)?;
+        Ok(if idx == u64::MAX {
+            Self::Fallthrough
+        } else {
+            Self::Statement(StatementIdx(
+                usize::try_from(idx).map_err(|_| Felt252SerdeError::InvalidInputForDeserialization)?,
+            ))
+        })
     }
 }
 

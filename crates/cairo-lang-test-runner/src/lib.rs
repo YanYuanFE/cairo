@@ -33,6 +33,7 @@ use salsa::Database;
 
 #[cfg(test)]
 mod test;
+pub mod wasm_cairo_interface;
 
 type ArcCustomHintProcessorFactory = Arc<
     dyn (for<'a> Fn(CairoHintProcessor<'a>) -> Box<dyn StarknetHintProcessor + 'a>) + Send + Sync,
@@ -325,10 +326,10 @@ struct TestResult {
 
 /// Summary data of the tests run.
 pub struct TestsSummary {
-    passed: Vec<String>,
-    failed: Vec<String>,
-    ignored: Vec<String>,
-    failed_run_results: Vec<Result<RunResultValue>>,
+    pub passed: Vec<String>,
+    pub failed: Vec<String>,
+    pub ignored: Vec<String>,
+    pub failed_run_results: Vec<Result<RunResultValue>>,
 }
 
 /// Runs the tests and processes the results for a summary.

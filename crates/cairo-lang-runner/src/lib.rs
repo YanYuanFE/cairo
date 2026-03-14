@@ -34,6 +34,7 @@ pub mod casm_run;
 pub mod clap;
 pub mod profiling;
 pub mod short_string;
+pub mod wasm_cairo_interface;
 
 const MAX_STACK_TRACE_DEPTH_DEFAULT: usize = 100;
 

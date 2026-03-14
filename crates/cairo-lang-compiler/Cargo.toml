@@ -23,6 +23,7 @@ cairo-lang-sierra-generator = { path = "../cairo-lang-sierra-generator", version
 cairo-lang-syntax = { path = "../cairo-lang-syntax", version = "=2.16.0" }
 cairo-lang-utils = { path = "../cairo-lang-utils", version = "=2.16.0" }
 indoc.workspace = true
+include_dir = "0.7"
 rayon.workspace = true
 salsa.workspace = true
 semver.workspace = true

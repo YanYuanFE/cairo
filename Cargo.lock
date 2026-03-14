@@ -507,6 +507,7 @@ dependencies = [
  "cairo-lang-sierra-generator",
  "cairo-lang-syntax",
  "cairo-lang-utils",
+ "include_dir",
  "indoc",
  "rayon",
  "salsa",
@@ -822,11 +823,14 @@ dependencies = [
 name = "cairo-lang-runner"
 version = "2.16.0"
 dependencies = [
+ "anyhow",
  "ark-ff",
  "ark-secp256k1",
  "ark-secp256r1",
  "cairo-lang-casm",
  "cairo-lang-compiler",
+ "cairo-lang-diagnostics",
+ "cairo-lang-filesystem",
  "cairo-lang-lowering",
  "cairo-lang-runnable-utils",
  "cairo-lang-semantic",
@@ -2351,6 +2355,25 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.114",
+]
+
+[[package]]
+name = "include_dir"
+version = "0.7.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "923d117408f1e49d914f1a379a309cffe4f18c05cf4e3d12e613a15fc81bd0dd"
+dependencies = [
+ "include_dir_macros",
+]
+
+[[package]]
+name = "include_dir_macros"
+version = "0.7.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7cab85a7ed0bd5f0e76d93846e0147172bed2e2d3f859bcc33a8d9699cad1a75"
+dependencies = [
+ "proc-macro2",
+ "quote",
 ]
 
 [[package]]

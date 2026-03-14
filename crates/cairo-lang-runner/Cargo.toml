@@ -7,11 +7,15 @@ license-file.workspace = true
 description = "Basic cairo runner."
 
 [dependencies]
+anyhow.workspace = true
 ark-ff.workspace = true
 ark-secp256k1.workspace = true
 ark-secp256r1.workspace = true
 
 cairo-lang-casm = { path = "../cairo-lang-casm", version = "=2.16.0" }
+cairo-lang-compiler = { path = "../cairo-lang-compiler", version = "=2.16.0" }
+cairo-lang-diagnostics = { path = "../cairo-lang-diagnostics", version = "=2.16.0" }
+cairo-lang-filesystem = { path = "../cairo-lang-filesystem", version = "=2.16.0" }
 cairo-lang-lowering = { path = "../cairo-lang-lowering", version = "=2.16.0" }
 cairo-lang-runnable-utils = { path = "../cairo-lang-runnable-utils", version = "=2.16.0" }
 cairo-lang-sierra = { path = "../cairo-lang-sierra", version = "=2.16.0" }
