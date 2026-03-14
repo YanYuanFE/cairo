@@ -5,31 +5,32 @@ use std::sync::Arc;
 use anyhow::Result;
 use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_defs::ids::ModuleId;
-use cairo_lang_filesystem::db::{CrateConfiguration, CrateSettings, DependencySettings, Edition,
-    ExperimentalFeaturesConfig, FilesGroup, CORELIB_VERSION,
-    update_crate_configuration_input_helper, set_crate_configs_input};
+use cairo_lang_filesystem::db::{
+    CORELIB_VERSION, CrateConfiguration, CrateSettings, DependencySettings, Edition,
+    ExperimentalFeaturesConfig, FilesGroup, set_crate_configs_input,
+    update_crate_configuration_input_helper,
+};
 use cairo_lang_filesystem::ids::{
-    CrateId, CrateInput, CrateLongId, Directory, FileId, FileKind, FileLongId, SmolStrId, VirtualFile,
+    CrateId, CrateInput, CrateLongId, Directory, FileId, FileKind, FileLongId, SmolStrId,
+    VirtualFile,
 };
 use cairo_lang_filesystem::{override_file_content, set_crate_config};
 use cairo_lang_sierra::program::Program;
 use cairo_lang_utils::Intern;
-use include_dir::{include_dir, Dir};
+use include_dir::{Dir, include_dir};
 use salsa::Database;
 
-use crate::{
-    compile_prepared_db_program,
-    db::RootDatabase,
-    diagnostics::DiagnosticsReporter,
-    project::ProjectError,
-    CompilerConfig,
-};
+use crate::db::RootDatabase;
+use crate::diagnostics::DiagnosticsReporter;
+use crate::project::ProjectError;
+use crate::{CompilerConfig, compile_prepared_db_program};
 
 /// Input for a dependency crate passed from the WASM/JS layer.
 pub struct DependencyInput {
     /// Map of relative file paths to their content (e.g. "lib.cairo" -> "mod erc20;").
     pub files: HashMap<String, String>,
-    /// The Cairo edition for this dependency (e.g. "2024_07"). Defaults to Edition::default() if None.
+    /// The Cairo edition for this dependency (e.g. "2024_07"). Defaults to Edition::default() if
+    /// None.
     pub edition: Option<String>,
     /// This dependency's own dependencies (names only, must also be in the top-level deps map).
     pub dependencies: Vec<String>,
@@ -49,7 +50,7 @@ fn parse_edition(s: &str) -> Edition {
 }
 
 // Embed the entire corelib/src directory at compile time
-static EMBEDDED_CORELIB: Dir = include_dir!("$CARGO_MANIFEST_DIR/../../corelib/src");
+static EMBEDDED_CORELIB: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/../../corelib/src");
 
 /// Initialize corelib in the database using embedded files.
 /// This works in both native and WASM environments, avoiding filesystem-based detection.
@@ -79,10 +80,7 @@ pub fn init_corelib(db: &mut RootDatabase) {
 }
 
 /// Build a `Directory::Virtual` tree from an embedded `include_dir::Dir`.
-fn build_corelib_virtual_directory<'db>(
-    db: &'db dyn Database,
-    dir: &Dir,
-) -> Directory<'db> {
+fn build_corelib_virtual_directory<'db>(db: &'db dyn Database, dir: &Dir<'_>) -> Directory<'db> {
     let mut files: BTreeMap<String, FileId<'db>> = BTreeMap::new();
     let mut dirs: BTreeMap<String, Box<Directory<'db>>> = BTreeMap::new();
 
@@ -191,7 +189,8 @@ pub fn compile_cairo_project_with_virtual_files_and_deps(
 ) -> Result<Program> {
     let mut db = RootDatabase::builder().build()?;
     init_corelib(&mut db);
-    let main_crate_ids = setup_virtual_project_with_deps(&mut db, project_name, files, dependencies);
+    let main_crate_ids =
+        setup_virtual_project_with_deps(&mut db, project_name, files, dependencies);
     let crate_ids = CrateInput::into_crate_ids(&db, main_crate_ids.clone());
 
     check_diagnostics(&db, &main_crate_ids)?;
@@ -199,8 +198,8 @@ pub fn compile_cairo_project_with_virtual_files_and_deps(
 }
 
 /// Setup the 'db' with a virtual multi-file project.
-/// Files should be keyed by their path relative to `src/` (e.g. "lib.cairo", "utils.cairo", "contract/lib.cairo").
-/// If paths start with "src/", the prefix is stripped automatically.
+/// Files should be keyed by their path relative to `src/` (e.g. "lib.cairo", "utils.cairo",
+/// "contract/lib.cairo"). If paths start with "src/", the prefix is stripped automatically.
 pub fn setup_virtual_project(
     db: &mut RootDatabase,
     project_name: &str,
@@ -209,11 +208,7 @@ pub fn setup_virtual_project(
     let root_dir = build_virtual_directory(db, files);
 
     let crate_id = CrateId::plain(db, SmolStrId::from(db, project_name));
-    set_crate_config!(
-        db,
-        crate_id,
-        Some(CrateConfiguration::default_for_root(root_dir))
-    );
+    set_crate_config!(db, crate_id, Some(CrateConfiguration::default_for_root(root_dir)));
 
     let crate_id = CrateId::plain(db, SmolStrId::from(db, project_name));
     vec![crate_id.long(db).clone().into_crate_input(db)]
@@ -237,17 +232,13 @@ pub fn setup_virtual_project_with_deps(
     for (dep_name, dep_input) in dependencies {
         let dep_root_dir = build_virtual_directory(db, &dep_input.files);
 
-        let edition = dep_input.edition.as_deref()
-            .map(parse_edition)
-            .unwrap_or(Edition::V2024_07);
+        let edition = dep_input.edition.as_deref().map(parse_edition).unwrap_or(Edition::V2024_07);
 
         // Build the dependency's own dependencies mapping.
         let mut dep_dependencies = BTreeMap::new();
         for sub_dep_name in &dep_input.dependencies {
-            dep_dependencies.insert(
-                sub_dep_name.clone(),
-                DependencySettings { discriminator: None },
-            );
+            dep_dependencies
+                .insert(sub_dep_name.clone(), DependencySettings { discriminator: None });
         }
 
         let dep_crate_id = CrateId::plain(db, SmolStrId::from(db, dep_name.as_str()));
@@ -271,10 +262,7 @@ pub fn setup_virtual_project_with_deps(
 
     let mut main_dependencies = BTreeMap::new();
     for dep_name in dependencies.keys() {
-        main_dependencies.insert(
-            dep_name.clone(),
-            DependencySettings { discriminator: None },
-        );
+        main_dependencies.insert(dep_name.clone(), DependencySettings { discriminator: None });
     }
 
     let crate_id = CrateId::plain(db, SmolStrId::from(db, project_name));
@@ -347,8 +335,8 @@ fn create_virtual_file<'db>(db: &'db dyn Database, name: &str, content: &str) ->
 /// Check diagnostics and bail with error string if any found.
 fn check_diagnostics(db: &RootDatabase, crate_ids: &[CrateInput]) -> Result<()> {
     let mut diagnostics = String::new();
-    let mut reporter = DiagnosticsReporter::write_to_string(&mut diagnostics)
-        .with_crates(crate_ids);
+    let mut reporter =
+        DiagnosticsReporter::write_to_string(&mut diagnostics).with_crates(crate_ids);
     let found = reporter.check(db);
     drop(reporter);
     if found {

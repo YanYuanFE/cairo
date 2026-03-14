@@ -634,7 +634,8 @@ impl Felt252Serde for BranchTarget {
             Self::Fallthrough
         } else {
             Self::Statement(StatementIdx(
-                usize::try_from(idx).map_err(|_| Felt252SerdeError::InvalidInputForDeserialization)?,
+                usize::try_from(idx)
+                    .map_err(|_| Felt252SerdeError::InvalidInputForDeserialization)?,
             ))
         })
     }

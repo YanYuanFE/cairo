@@ -3,7 +3,10 @@ use std::path::Path;
 
 use anyhow::Result;
 use cairo_lang_compiler::db::RootDatabase;
-use cairo_lang_compiler::wasm_cairo_interface::{setup_project_with_input_string, setup_virtual_project, setup_virtual_project_with_deps, init_corelib, DependencyInput};
+use cairo_lang_compiler::wasm_cairo_interface::{
+    DependencyInput, init_corelib, setup_project_with_input_string, setup_virtual_project,
+    setup_virtual_project_with_deps,
+};
 use cairo_lang_filesystem::cfg::{Cfg, CfgSet};
 use cairo_lang_starknet::starknet_plugin_suite;
 use cairo_lang_test_plugin::{TestsCompilationConfig, test_plugin_suite};
@@ -116,7 +119,8 @@ impl<'db> TestCompiler<'db> {
         config: TestsCompilationConfig<'db>,
     ) -> Result<Self> {
         let mut db = build_test_db(gas_enabled, config.starknet)?;
-        let main_crate_inputs = setup_project_with_input_string(&mut db, path, input_program_string)?;
+        let main_crate_inputs =
+            setup_project_with_input_string(&mut db, path, input_program_string)?;
 
         Ok(Self {
             db: db.snapshot(),
@@ -157,7 +161,8 @@ impl<'db> TestCompiler<'db> {
         config: TestsCompilationConfig<'db>,
     ) -> Result<Self> {
         let mut db = build_test_db(gas_enabled, config.starknet)?;
-        let main_crate_inputs = setup_virtual_project_with_deps(&mut db, project_name, files, dependencies);
+        let main_crate_inputs =
+            setup_virtual_project_with_deps(&mut db, project_name, files, dependencies);
 
         Ok(Self {
             db: db.snapshot(),
@@ -189,6 +194,7 @@ fn build_test_db(gas_enabled: bool, starknet: bool) -> Result<RootDatabase> {
 
 // ========== Single-file test execution ==========
 
+#[allow(clippy::too_many_arguments)]
 pub fn run_tests_with_input_string(
     input_program_string: &str,
     allow_warnings: bool,
@@ -210,16 +216,12 @@ pub fn run_tests_with_input_string(
         print_resource_usage,
     };
 
-    let runner = TestRunner::new_with_string(
-        input_program_string,
-        path,
-        starknet,
-        allow_warnings,
-        config,
-    )?;
+    let runner =
+        TestRunner::new_with_string(input_program_string, path, starknet, allow_warnings, config)?;
     runner.run()
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn run_tests_with_input_string_parsed(
     input_program_string: &str,
     allow_warnings: bool,
@@ -247,6 +249,7 @@ pub fn run_tests_with_input_string_parsed(
 
 // ========== Multi-file test execution (new) ==========
 
+#[allow(clippy::too_many_arguments)]
 pub fn run_tests_with_virtual_project(
     project_name: &str,
     files: &HashMap<String, String>,
@@ -277,6 +280,7 @@ pub fn run_tests_with_virtual_project(
     runner.run()
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn run_tests_with_virtual_project_parsed(
     project_name: &str,
     files: &HashMap<String, String>,
@@ -304,6 +308,7 @@ pub fn run_tests_with_virtual_project_parsed(
 
 // ========== Multi-file test execution with dependencies (new) ==========
 
+#[allow(clippy::too_many_arguments)]
 pub fn run_tests_with_virtual_project_and_deps(
     project_name: &str,
     files: &HashMap<String, String>,
@@ -336,6 +341,7 @@ pub fn run_tests_with_virtual_project_and_deps(
     runner.run()
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn run_tests_with_virtual_project_and_deps_parsed(
     project_name: &str,
     files: &HashMap<String, String>,
@@ -376,9 +382,7 @@ fn format_test_result(result: Result<Option<TestsSummary>>) -> Result<String> {
             );
             Ok(msg)
         }
-        Ok(None) => {
-            Ok("All tests passed.".to_string())
-        }
+        Ok(None) => Ok("All tests passed.".to_string()),
         Err(e) => Err(e),
     }
 }

@@ -4,7 +4,10 @@ use std::path::Path;
 use anyhow::{Context, Error, Result};
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_compiler::diagnostics::DiagnosticsReporter;
-use cairo_lang_compiler::wasm_cairo_interface::{setup_project_with_input_string, setup_virtual_project, setup_virtual_project_with_deps, init_corelib, DependencyInput};
+use cairo_lang_compiler::wasm_cairo_interface::{
+    DependencyInput, init_corelib, setup_project_with_input_string, setup_virtual_project,
+    setup_virtual_project_with_deps,
+};
 use cairo_lang_diagnostics::ToOption;
 use cairo_lang_filesystem::ids::CrateInput;
 use cairo_lang_sierra_generator::db::SierraGenGroup;
@@ -13,7 +16,10 @@ use cairo_lang_sierra_generator::replace_ids::{DebugReplacer, SierraIdReplacer};
 use cairo_lang_starknet::contract::{find_contracts, get_contracts_info};
 
 use crate::casm_run::format_next_item;
-use crate::{RunResultValue, ProfilingInfoCollectionConfig, SierraCasmRunner, StarknetState, RunResultStarknet};
+use crate::{
+    ProfilingInfoCollectionConfig, RunResultStarknet, RunResultValue, SierraCasmRunner,
+    StarknetState,
+};
 
 // ========== Single-file run (existing) ==========
 
@@ -35,7 +41,15 @@ pub fn run_with_input_program_string(
     init_corelib(db);
 
     let main_crate_inputs = setup_project_with_input_string(db, path, input_program_string)?;
-    run_prepared_project(db, main_crate_inputs, available_gas, allow_warnings, print_full_memory, run_profiler, use_dbg_print_hint)
+    run_prepared_project(
+        db,
+        main_crate_inputs,
+        available_gas,
+        allow_warnings,
+        print_full_memory,
+        run_profiler,
+        use_dbg_print_hint,
+    )
 }
 
 // ========== Multi-file run (new) ==========
@@ -57,11 +71,20 @@ pub fn run_with_virtual_project(
     init_corelib(db);
 
     let main_crate_inputs = setup_virtual_project(db, project_name, files);
-    run_prepared_project(db, main_crate_inputs, available_gas, allow_warnings, print_full_memory, run_profiler, use_dbg_print_hint)
+    run_prepared_project(
+        db,
+        main_crate_inputs,
+        available_gas,
+        allow_warnings,
+        print_full_memory,
+        run_profiler,
+        use_dbg_print_hint,
+    )
 }
 
 // ========== Multi-file run with dependencies (new) ==========
 
+#[allow(clippy::too_many_arguments)]
 pub fn run_with_virtual_project_and_deps(
     project_name: &str,
     files: &HashMap<String, String>,
@@ -80,7 +103,15 @@ pub fn run_with_virtual_project_and_deps(
     init_corelib(db);
 
     let main_crate_inputs = setup_virtual_project_with_deps(db, project_name, files, dependencies);
-    run_prepared_project(db, main_crate_inputs, available_gas, allow_warnings, print_full_memory, run_profiler, use_dbg_print_hint)
+    run_prepared_project(
+        db,
+        main_crate_inputs,
+        available_gas,
+        allow_warnings,
+        print_full_memory,
+        run_profiler,
+        use_dbg_print_hint,
+    )
 }
 
 // ========== Shared logic ==========
@@ -98,8 +129,8 @@ fn run_prepared_project(
 
     {
         let mut diagnostics = String::new();
-        let mut reporter = DiagnosticsReporter::write_to_string(&mut diagnostics)
-            .with_crates(&main_crate_inputs);
+        let mut reporter =
+            DiagnosticsReporter::write_to_string(&mut diagnostics).with_crates(&main_crate_inputs);
         if allow_warnings {
             reporter = reporter.allow_warnings();
         }
@@ -110,11 +141,11 @@ fn run_prepared_project(
         }
     }
 
-    let SierraProgramWithDebug { program: mut sierra_program, debug_info: _ } =
-        db.get_sierra_program(main_crate_ids.clone())
-            .to_option()
-            .with_context(|| "Compilation failed without any diagnostics.")?
-            .clone();
+    let SierraProgramWithDebug { program: mut sierra_program, debug_info: _ } = db
+        .get_sierra_program(main_crate_ids.clone())
+        .to_option()
+        .with_context(|| "Compilation failed without any diagnostics.")?
+        .clone();
     let replacer = DebugReplacer { db };
     replacer.enrich_function_names(&mut sierra_program);
     if available_gas.is_none() && sierra_program.requires_gas_counter() {
@@ -133,7 +164,9 @@ fn run_prepared_project(
     )
     .map_err(|err| Error::msg(err.to_string()))?;
 
-    let func = runner.find_function("::main").map_err(|err: crate::RunnerError| Error::msg(err.to_string()))?;
+    let func = runner
+        .find_function("::main")
+        .map_err(|err: crate::RunnerError| Error::msg(err.to_string()))?;
     let result = runner
         .run_function_with_starknet_context(func, vec![], available_gas, StarknetState::default())
         .map_err(|err: crate::RunnerError| Error::msg(err.to_string()))?;
@@ -161,7 +194,7 @@ fn generate_run_result_log(
                     result_string.push_str(", ");
                 }
                 first = false;
-                result_string.push_str(&format!("{}", item.quote_if_string()));
+                result_string.push_str(&item.quote_if_string());
             }
             result_string.push_str("].\n");
         }
